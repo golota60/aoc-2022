@@ -1,0 +1,7 @@
+{
+  "name": "aoc-2022",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Szymon Wiszczuk <golota60@gmail.com>",
+  "license": "MIT"
+}

@@ -1008,13 +1008,14 @@ const input2 = `2-4,6-8
 
 const split = input.split("\n");
 
-const part = "part2";
+const part = "part1";
 
 // check whether big fully contains small
 const containCheck = (big, small) => {
   let acc = 0;
+  const smallSet = new Set(small);
   big.forEach((e) => {
-    if (small.includes(e)) acc += 1;
+    if (smallSet.has(e)) acc += 1;
   });
   // the only diff between part1 and part2 is this check
   return part === "part1" ? acc === small.length : acc >= 1;

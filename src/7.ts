@@ -1078,22 +1078,8 @@ input.split("\n").reduce((acc, cmdLine) => {
     if (command === "cd") {
       //   console.log(currMarker);
       if (arg === "..") {
-        // // store child marker before changing
-        // const childMarker = currMarker;
-
         const asArr = currMarker.split("/");
         currMarker = asArr.slice(0, asArr.length - 2).join("/") + "/";
-
-        // // BEFORE LEAVING A FOLDER
-        // // add it's size to a parent folder
-        // const parentFolder = parsedFolders.find((e) => e.path === currMarker);
-        // const childFolder = parsedFolders.find((e) => e.path === childMarker);
-        // parentFolder.size += childFolder.size;
-
-        // // filter parent out
-        // const filteredOut = parsedFolders.filter((e) => e.path !== currMarker);
-        // // put it back in
-        // parsedFolders = [...filteredOut, parentFolder];
 
         return acc;
       } else {
@@ -1116,7 +1102,9 @@ input.split("\n").reduce((acc, cmdLine) => {
       //secondArgs is fileName
       //find currentFolder
 
-      const currFolder = parsedFolders.find((e) => e.path === currMarker);
+      const currFolder = {
+        ...parsedFolders.find((e) => e.path === currMarker),
+      };
       currFolder.size += fileSize;
       const filteredOut = parsedFolders.filter((e) => e.path !== currMarker);
       parsedFolders = [...filteredOut, currFolder];
@@ -1124,35 +1112,47 @@ input.split("\n").reduce((acc, cmdLine) => {
   }
 }, {} as TreeState);
 
+// sorting is very important for next step. we want to add children to parents in a child -> parent manner
+// this will work for everything except root cause fuck me
 const sort = parsedFolders.sort((a, b) => {
   const aElems = a.path.split("/");
   const bElems = b.path.split("/");
   return aElems < bElems ? 1 : -1;
 });
-console.log(sort)
+console.log(sort);
 
-const addChildToParents = parsedFolders.reduce((acc, folder) => {
+sort.forEach((folder) => {
   const { path, size } = folder;
 
   const asArr = path.split("/");
-//   console.log(path);
-  const parentPath = asArr.slice(0, asArr.length - 2).join("/") + "/";
-//   console.log(parentPath);
+  //   console.log(path);
+  const isNotRoot = path !== "/";
+  if (isNotRoot) {
+    const par = asArr.slice(0, asArr.length - 2).join("/");
+    const parentPath = par + (par !== "/" ? "/" : "");
+    //   console.log(parentPath);
 
-  const parentFolder = parsedFolders.find((e) => e.path === parentPath);
-  if (parentFolder) {
-    parentFolder.size += size;
-    // console.log(parsedFolders.length);
-    const filteredOut = parsedFolders.filter((e) => e.path !== parentPath);
-    // console.log(filteredOut.length);
-    return [...filteredOut, parentFolder];
+    // CHANGE THE ORIGINAL REFERENCE TO PRESERVE THE PLACE
+    const parentFolder = sort.find((e) => e.path === parentPath);
+    if (parentFolder) {
+      parentFolder.size += size;
+
+      if (parentFolder.path === "/")
+        console.log(
+          folder,
+          sort.find((e) => e.path === "/")
+        );
+      // console.log(parsedFolders.length);\
+      // return acc;
+      return;
+    }
+    console.log("chungus moment detected");
+    //   return acc;
+    // filter parent out
   }
-  console.log("chungus moment detected");
-  return acc;
-  // filter parent out
-}, parsedFolders);
+}, sort);
 
-const sum = addChildToParents.reduce((acc, e) => {
+const sum = sort.reduce((acc, e) => {
   if (e.size < 100_000) {
     return acc + e.size;
   }
@@ -1161,12 +1161,25 @@ const sum = addChildToParents.reduce((acc, e) => {
 // console.log(parsedFolders);
 console.log(sum);
 
+// part2
+
+const fileSystemSize = 70_000_000;
+const spaceTaken = sort.find((e) => e.path === "/").size;
+const freeSpace = fileSystemSize - spaceTaken;
+const spaceNeeded = 30_000_000;
+const spaceToFreeUp = spaceNeeded - freeSpace;
+console.log(spaceToFreeUp);
+
+let diff = 99999999;
+let closestFolder: Folder;
+sort.forEach((e) => {
+  const roomAfterDeletion = e.size - spaceToFreeUp;
+  if (roomAfterDeletion > 0 && roomAfterDeletion < diff) {
+    // new candidate
+    diff = roomAfterDeletion;
+    closestFolder = e;
+  }
+});
+console.log(closestFolder)
+
 export {};
-
-//1544163
-//1377997
-
-// const fileSize = Number(firstArg);
-// if (fileSize <= 100_000) {
-//   allFilesSize += fileSize;
-// }
